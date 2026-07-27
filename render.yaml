@@ -1,0 +1,13 @@
+# Render blueprint: deploys the API straight from the GitHub repo, no local
+# Docker needed. In Render, New > Blueprint, point at this repo, and it builds
+# from the Dockerfile and serves /ask on a public URL.
+services:
+  - type: web
+    name: paperlens-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: PAPERLENS_STORE_BACKEND
+        value: demo

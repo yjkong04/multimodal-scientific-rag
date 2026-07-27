@@ -1,0 +1,28 @@
+# Fly.io config for the API. Deploy: `fly launch --copy-config` then `fly deploy`.
+# Serves the demo store with no external services attached.
+app = "paperlens-api"
+primary_region = "yyz"  # Toronto
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PAPERLENS_STORE_BACKEND = "demo"
+
+[http_service]
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [http_service.checks]
+    [[http_service.checks.http]]
+      method = "GET"
+      path = "/health"
+      interval = "15s"
+      timeout = "2s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
