@@ -11,8 +11,9 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 - ☑ Repo, README one-pager, milestones, license, `.gitignore`
 - ☑ FastAPI app with `/health` and `/ask`
 - ☑ In-memory demo store so `/ask` returns a real, cited answer shape with zero setup
-- ☐ Deploy the API publicly (Fly.io / Render) — URL in README
-- ☐ Dockerfile builds and runs clean
+- ☑ Dockerfile + Render/Fly config ready (see [DEPLOY.md](./DEPLOY.md))
+- ☑ Pushed to GitHub: https://github.com/yjkong04/paperlens
+- ◐ Deploy the API publicly — one click from Render (needs your account login); add the URL to the README
 
 **Done when:** a stranger can `curl` the deployed `/ask` and get a structured, cited (if canned) response.
 

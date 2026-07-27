@@ -1,5 +1,7 @@
 # PaperLens
 
+[![repo](https://img.shields.io/badge/github-yjkong04%2Fpaperlens-blue)](https://github.com/yjkong04/paperlens)
+
 **A multi-modal RAG system that answers questions by reasoning over both the text and the figures in scientific papers — and cites exactly where each part of the answer came from.**
 
 Ask *"What does Figure 3 show about the relationship between drug dose and tumor volume?"* and get a grounded, cited answer that pulls from the figure, its caption, and the surrounding methods and results — not a hallucination.
