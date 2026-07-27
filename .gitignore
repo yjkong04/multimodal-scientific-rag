@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Env / secrets
+.env
+.env.local
+*.local
+
+# Data / corpus (large; not committed)
+data/
+*.pdf
+*.tar.gz
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+frontend/.env*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
