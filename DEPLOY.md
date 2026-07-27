@@ -1,23 +1,36 @@
 # Deploying the API
 
 The API runs the demo store, so it needs no database or API keys to go live.
-Pick whichever host you have an account for. Both need the repo pushed to GitHub.
+Everything below is Docker-based. The image builds and serves `/ask` as-is.
 
-## Option A — Render (no local Docker required, recommended for day one)
-1. Push this repo to GitHub (done — see the repo URL in the README badge).
-2. Render dashboard → **New → Blueprint** → connect this repo.
-3. Render reads [`render.yaml`](./render.yaml), builds the Dockerfile, and serves.
-4. When it's live, hit `https://<your-service>.onrender.com/health`.
-
-The free plan sleeps on idle, so the first request after a nap is slow — fine for a demo.
-
-## Option B — Fly.io (needs flyctl + Docker locally)
+## Build and run locally
 ```bash
-brew install flyctl          # if not installed
-fly auth login
-fly launch --copy-config --no-deploy   # uses fly.toml, picks an app name
-fly deploy
-fly open                     # opens the live URL
+docker build -t paperlens:latest .
+docker run --rm -p 8000:8000 paperlens:latest
+curl -s localhost:8000/health
+```
+
+## Publish a public image to GHCR
+A pullable image under your GitHub account — anyone can `docker run` it.
+```bash
+gh auth refresh -s write:packages           # one-time: grant package scope
+gh auth token | docker login ghcr.io -u yjkong04 --password-stdin
+docker build -t ghcr.io/yjkong04/paperlens:latest .
+docker push ghcr.io/yjkong04/paperlens:latest
+```
+Then anyone can:
+```bash
+docker run -p 8000:8000 ghcr.io/yjkong04/paperlens:latest
+```
+The package starts private; make it public in the repo's Packages settings.
+
+## Deploy a live URL on Fly.io (Docker-native)
+`fly deploy` builds and pushes the Docker image and serves it over https.
+```bash
+fly auth login                              # one-time: browser login + card on file
+fly launch --copy-config --no-deploy        # uses fly.toml, creates the app
+fly deploy                                   # builds Docker image, ships it
+fly open                                      # opens the live URL
 ```
 
 ## Verify a live deployment

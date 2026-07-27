@@ -2,6 +2,11 @@
 # so it deploys and serves /ask immediately.
 FROM python:3.11-slim
 
+# Link the GHCR package back to the repo and license.
+LABEL org.opencontainers.image.source="https://github.com/yjkong04/paperlens"
+LABEL org.opencontainers.image.description="Multi-modal RAG over scientific papers: cited answers over text and figures"
+LABEL org.opencontainers.image.licenses="MIT"
+
 WORKDIR /app
 
 # Deps first for layer caching.
