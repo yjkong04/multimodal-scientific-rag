@@ -9,8 +9,14 @@ so it is real from day one, not stubbed.
 
 from __future__ import annotations
 
-from .schemas import AskRequest, AskResponse, Citation, Modality
+from .generation import Generator
+from .schemas import AskRequest, AskResponse, Citation
 from .store import ScoredRecord, Store
+
+_REFUSAL = (
+    "I couldn't find anything in the corpus that supports an answer to that "
+    "question, so I won't guess."
+)
 
 
 def _to_citation(scored: ScoredRecord) -> Citation:
@@ -27,46 +33,18 @@ def _to_citation(scored: ScoredRecord) -> Citation:
     )
 
 
-def _compose_answer(question: str, citations: list[Citation]) -> str:
-    """Extractive placeholder for VLM generation.
-
-    Stitches the top text passage and figure caption into a short answer that
-    stays strictly grounded in retrieved sources. Replaced by Claude vision in
-    Week 3-4; the citation list it draws from does not change.
-    """
-    text_bits = [c.snippet for c in citations if c.modality == Modality.TEXT]
-    fig_bits = [(c.figure_label, c.snippet) for c in citations if c.modality == Modality.FIGURE]
-
-    parts: list[str] = []
-    if text_bits:
-        parts.append(text_bits[0])
-    if fig_bits:
-        label, cap = fig_bits[0]
-        parts.append(f"{label or 'The figure'} supports this: {cap}")
-    return " ".join(parts)
-
-
-def answer_question(req: AskRequest, store: Store) -> AskResponse:
+def answer_question(req: AskRequest, store: Store, generator: Generator) -> AskResponse:
     text_hits = store.search_text(req.question, req.top_k_text)
     figure_hits = store.search_figures(req.question, req.top_k_figures)
 
     citations = [_to_citation(s) for s in (*text_hits, *figure_hits)]
     citations.sort(key=lambda c: c.score, reverse=True)
 
-    if not citations:
-        return AskResponse(
-            answer=(
-                "I couldn't find anything in the corpus that supports an answer to "
-                "that question, so I won't guess."
-            ),
-            citations=[],
-            status="refused",
-            backend=store.name,
-        )
+    # Nothing retrieved, or the generator couldn't ground an answer -> refuse.
+    answer = generator.generate(req.question, citations) if citations else ""
+    if not answer.strip():
+        return AskResponse(answer=_REFUSAL, citations=[], status="refused", backend=store.name)
 
     return AskResponse(
-        answer=_compose_answer(req.question, citations),
-        citations=citations,
-        status="answered",
-        backend=store.name,
+        answer=answer, citations=citations, status="answered", backend=store.name
     )
