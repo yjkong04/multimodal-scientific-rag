@@ -53,7 +53,7 @@ def write_paper(conn, paper: ParsedPaper, chunks: list[Chunk], embedder: Embedde
                     (figure_id, paper_id, section, figure_label, caption, image_uri, caption_embedding)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 """,
-                (c.chunk_id, c.paper_id, c.section, c.figure_label, c.content, None, vec),
+                (c.chunk_id, c.paper_id, c.section, c.figure_label, c.content, c.image_uri, vec),
             )
 
     return len(text_chunks), len(figures)
