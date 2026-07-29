@@ -27,6 +27,7 @@ class Figure:
     caption: str
     fig_id: str | None = None  # JATS xml id, useful to resolve the image file later
     graphic_href: str | None = None  # <graphic> filename; resolves to a public image URL
+    image_uri: str | None = None  # CDN image URL, filled in by ingest.figures
 
 
 @dataclass
@@ -81,17 +82,32 @@ def _norm(s: str) -> str:
     return " ".join(s.split()).strip()
 
 
-def _graphic_href(fig_el: ET.Element) -> str | None:
-    """The image filename a <fig> points at, from its (possibly nested) <graphic>.
+def _href(el: ET.Element) -> str | None:
+    """The href of an element, from its xlink-namespaced (or bare) `href` attr."""
+    for key, val in el.attrib.items():
+        if _local(key) == "href":
+            return val
+    return None
 
-    The href lives in an xlink-namespaced attribute; match on the local name so
-    we handle both namespaced and bare `href`.
+
+def _graphic_href(fig_el: ET.Element) -> str | None:
+    """The image filename a <fig> displays, from its <graphic> element.
+
+    Prefers a <graphic> that is a direct child of the <fig> (the figure's own
+    image), falling back to a descendant <graphic>. Deliberately ignores
+    <inline-graphic> (inline icons/formulae, e.g. inside the caption), which is
+    not the figure's display image.
     """
-    for c in fig_el.iter():
-        if _local(c.tag) in ("graphic", "inline-graphic"):
-            for key, val in c.attrib.items():
-                if _local(key) == "href":
-                    return val
+    for c in fig_el:  # direct children first
+        if _local(c.tag) == "graphic":
+            href = _href(c)
+            if href:
+                return href
+    for c in fig_el.iter():  # then any descendant <graphic>
+        if _local(c.tag) == "graphic":
+            href = _href(c)
+            if href:
+                return href
     return None
 
 
@@ -122,13 +138,16 @@ def parse_article(xml_bytes: bytes, paper_id: str) -> ParsedPaper:
             label_el = next((c for c in el if _local(c.tag) == "label"), None)
             caption_el = next((c for c in el if _local(c.tag) == "caption"), None)
             caption = _norm(_text(caption_el)) if caption_el is not None else ""
-            if caption:
+            graphic_href = _graphic_href(el)
+            # Keep a figure if it has a caption OR an image: a caption-less figure
+            # still carries an image the vision step can reason over.
+            if caption or graphic_href:
                 figures.append(
                     Figure(
                         label=_norm(_text(label_el)) if label_el is not None else None,
                         caption=caption,
                         fig_id=el.get("id"),
-                        graphic_href=_graphic_href(el),
+                        graphic_href=graphic_href,
                     )
                 )
 
