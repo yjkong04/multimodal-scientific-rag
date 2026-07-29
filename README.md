@@ -67,7 +67,7 @@ Multi-paper synthesis across the whole corpus, PDF layout parsing beyond what th
 - **Frontend:** Next.js document viewer (later milestone)
 
 ## Status
-Early. See [MILESTONES.md](./MILESTONES.md) for the plan and current milestone. The API runs today — see below.
+Weeks 1–2 done: the API runs on a built-in demo store with zero setup, **and** on a real corpus — PubMed Central Open Access papers ingested into pgvector, answered by dense (HNSW cosine) retrieval with citations to real passages and figures. See [MILESTONES.md](./MILESTONES.md).
 
 ## Quickstart
 
@@ -94,7 +94,28 @@ docker run -p 8000:8000 ghcr.io/yjkong04/multimodal-scientific-rag:latest
 curl -s localhost:8000/health
 ```
 
-For the full pipeline with Postgres/pgvector, see [`docker-compose.yml`](./docker-compose.yml) and `.env.example`. Deploy options are in [DEPLOY.md](./DEPLOY.md).
+### Real corpus (pgvector)
+
+```bash
+# 1. Start Postgres + pgvector (schema auto-applied)
+docker compose up -d db
+
+# 2. Install the embedder (local Hugging Face sentence-transformers)
+pip install -r requirements-ml.txt
+
+# 3. Ingest real open-access papers into pgvector
+python -m ingest --query "heart rate variability sepsis" --limit 5 --write
+
+# 4. Serve /ask on the real corpus
+PAPERLENS_STORE_BACKEND=pgvector uvicorn api.main:app --reload
+curl -s -X POST localhost:8000/ask -H 'content-type: application/json' \
+  -d '{"question": "How is heart rate variability used to predict sepsis?"}' | python3 -m json.tool
+```
+
+Embeddings default to `BAAI/bge-small-en-v1.5` (384-dim, CPU-friendly). For tests
+or a torch-free run, set `PAPERLENS_EMBEDDER=hashing` (deterministic, not semantic).
+
+Deploy options are in [DEPLOY.md](./DEPLOY.md).
 
 ## License
 MIT
