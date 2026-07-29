@@ -15,12 +15,12 @@ A pullable image under your GitHub account — anyone can `docker run` it.
 ```bash
 gh auth refresh -s write:packages           # one-time: grant package scope
 gh auth token | docker login ghcr.io -u yjkong04 --password-stdin
-docker build -t ghcr.io/yjkong04/paperlens:latest .
-docker push ghcr.io/yjkong04/paperlens:latest
+docker build -t ghcr.io/yjkong04/multimodal-scientific-rag:latest .
+docker push ghcr.io/yjkong04/multimodal-scientific-rag:latest
 ```
 Then anyone can:
 ```bash
-docker run -p 8000:8000 ghcr.io/yjkong04/paperlens:latest
+docker run -p 8000:8000 ghcr.io/yjkong04/multimodal-scientific-rag:latest
 ```
 The package starts private; make it public in the repo's Packages settings.
 
