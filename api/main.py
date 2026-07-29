@@ -10,7 +10,7 @@ from fastapi import FastAPI
 from .config import get_settings
 from .pipeline import answer_question
 from .schemas import AskRequest, AskResponse
-from .store import DemoStore, Store
+from .store import DemoStore, PgVectorStore, Store
 
 app = FastAPI(
     title="PaperLens",
@@ -21,12 +21,16 @@ app = FastAPI(
 
 def _build_store() -> Store:
     settings = get_settings()
-    # Week 2 adds: if settings.store_backend == "pgvector": return PgVectorStore(...)
-    if settings.store_backend != "demo":
-        raise RuntimeError(
-            f"store_backend={settings.store_backend!r} is not wired up yet; use 'demo'"
+    if settings.store_backend == "demo":
+        return DemoStore()
+    if settings.store_backend == "pgvector":
+        from .embeddings import build_embedder
+
+        embedder = build_embedder(
+            settings.embedder, settings.embedding_model, settings.embedding_dim
         )
-    return DemoStore()
+        return PgVectorStore(settings.database_url, embedder)
+    raise RuntimeError(f"unknown store_backend={settings.store_backend!r}")
 
 
 # One store instance for the process. Cheap for the demo; the pgvector store

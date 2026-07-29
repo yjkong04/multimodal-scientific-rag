@@ -10,9 +10,12 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from .schemas import Modality
+
+if TYPE_CHECKING:
+    from .embeddings import Embedder
 
 
 @dataclass
@@ -96,6 +99,90 @@ class DemoStore:
 
     def search_figures(self, query: str, k: int) -> list[ScoredRecord]:
         return self._search(query, k, Modality.FIGURE)
+
+
+class PgVectorStore:
+    """Dense retrieval over Postgres + pgvector.
+
+    Embeds the query at request time with the same embedder used at ingestion,
+    then cosine-ranks text chunks and figure captions with the `<=>` operator.
+    Score is 1 - cosine_distance, so higher is more similar (matching DemoStore).
+    """
+
+    def __init__(self, dsn: str, embedder: "Embedder") -> None:
+        import psycopg
+        from pgvector.psycopg import register_vector
+
+        self._embedder = embedder
+        self._conn = psycopg.connect(dsn, autocommit=True)
+        register_vector(self._conn)
+
+    @property
+    def name(self) -> str:
+        return "pgvector"
+
+    def _embed_query(self, query: str):
+        return self._embedder.embed([query])[0]
+
+    def search_text(self, query: str, k: int) -> list[ScoredRecord]:
+        if k <= 0:
+            return []
+        vec = self._embed_query(query)
+        rows = self._conn.execute(
+            """
+            SELECT chunk_id, paper_id, section, content,
+                   1 - (embedding <=> %s) AS score
+            FROM text_chunks
+            WHERE embedding IS NOT NULL
+            ORDER BY embedding <=> %s
+            LIMIT %s
+            """,
+            (vec, vec, k),
+        ).fetchall()
+        return [
+            ScoredRecord(
+                Record(
+                    paper_id=paper_id,
+                    source_id=chunk_id,
+                    modality=Modality.TEXT,
+                    text=content,
+                    section=section,
+                ),
+                float(score),
+            )
+            for chunk_id, paper_id, section, content, score in rows
+        ]
+
+    def search_figures(self, query: str, k: int) -> list[ScoredRecord]:
+        if k <= 0:
+            return []
+        vec = self._embed_query(query)
+        rows = self._conn.execute(
+            """
+            SELECT figure_id, paper_id, section, figure_label, caption, image_uri,
+                   1 - (caption_embedding <=> %s) AS score
+            FROM figures
+            WHERE caption_embedding IS NOT NULL
+            ORDER BY caption_embedding <=> %s
+            LIMIT %s
+            """,
+            (vec, vec, k),
+        ).fetchall()
+        return [
+            ScoredRecord(
+                Record(
+                    paper_id=paper_id,
+                    source_id=figure_id,
+                    modality=Modality.FIGURE,
+                    text=caption,
+                    section=section,
+                    figure_label=figure_label,
+                    image_uri=image_uri,
+                ),
+                float(score),
+            )
+            for figure_id, paper_id, section, figure_label, caption, image_uri, score in rows
+        ]
 
 
 def _demo_records() -> list[Record]:

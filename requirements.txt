@@ -5,3 +5,9 @@ pydantic-settings==2.7.0
 # Ingestion (Week 2): route Python TLS through the OS trust store so HTTPS to
 # NCBI works behind TLS-inspecting proxies. Fetch/parse otherwise use stdlib.
 truststore==0.10.4
+
+# pgvector dense-retrieval path (query embedding + DB access). The heavy HF
+# embedder itself lives in requirements-ml.txt so the demo image stays slim.
+psycopg[binary]==3.2.3
+pgvector==0.3.6
+numpy==2.2.1

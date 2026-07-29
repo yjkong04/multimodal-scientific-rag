@@ -19,15 +19,15 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 
 ---
 
-## Week 2 — Real corpus ingestion (text only)
-**Goal: real papers in the store, text retrieval working end to end.**
-- ☐ Fetch ~50 papers from the PMC Open Access subset
-- ☐ Parse into sections; chunk text with overlap; keep section + paper metadata
-- ☐ Embed chunks; write to pgvector; wire `docker-compose` Postgres
-- ☐ Swap `/ask` from the demo store to real dense retrieval over text chunks
-- ☐ Answers cite real passages (paper id + section + chunk)
+## Week 2 — Real corpus ingestion ☑
+**Goal: real papers in the store, dense retrieval working end to end.**
+- ☑ Fetch papers from the PMC Open Access subset (E-utilities)
+- ☑ Parse into sections; chunk text with overlap; keep section + paper metadata
+- ☑ Embed chunks (local HF `sentence-transformers`) and write to pgvector; `docker-compose` Postgres
+- ☑ Swap `/ask` from the demo store to real dense retrieval (HNSW cosine)
+- ☑ Answers cite real passages (paper id + section + chunk) and figures
 
-**Done when:** ask a text question, get an answer grounded in real retrieved passages with working citations.
+**Done when:** ask a text question, get an answer grounded in real retrieved passages with working citations. *(Figures already land here too — Week 3 deepens figure handling with VLM vision.)*
 
 ---
 

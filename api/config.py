@@ -15,13 +15,19 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_prefix="PAPERLENS_", extra="ignore")
 
-    # "demo" (in-memory, no deps) or "pgvector" (real corpus). Week 2 flips this.
+    # "demo" (in-memory, no deps) or "pgvector" (real corpus).
     store_backend: str = "demo"
 
-    # Filled in from Week 2 onward.
-    database_url: str | None = None
+    database_url: str = "postgresql://paperlens:paperlens@localhost:5432/paperlens"
+
+    # Embeddings. "sentence-transformer" (local HF, production) or "hashing"
+    # (deterministic, dependency-light, for tests/CI). Keep embedding_dim in sync
+    # with the model AND db/schema.sql.
+    embedder: str = "sentence-transformer"
+    embedding_model: str = "BAAI/bge-small-en-v1.5"
+    embedding_dim: int = 384
+
     anthropic_api_key: str | None = None
-    embedding_model: str = "text-embedding-placeholder"
     generation_model: str = "claude-sonnet-5"
 
 

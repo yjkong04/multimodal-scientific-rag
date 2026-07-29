@@ -1,0 +1,6 @@
+# Production embedder: local Hugging Face sentence-transformers (pulls torch).
+# Heavy, so it's kept out of the base image; install only where you run the
+# real embedder (ingestion with --write, or the API on the pgvector backend
+# with embedder=sentence-transformer).
+-r requirements.txt
+sentence-transformers==3.3.1
