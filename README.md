@@ -67,7 +67,7 @@ Multi-paper synthesis across the whole corpus, PDF layout parsing beyond what th
 - **Frontend:** Next.js document viewer (later milestone)
 
 ## Status
-Weeks 1–2 done: the API runs on a built-in demo store with zero setup, **and** on a real corpus — PubMed Central Open Access papers ingested into pgvector, answered by dense (HNSW cosine) retrieval with citations to real passages and figures. See [MILESTONES.md](./MILESTONES.md).
+Weeks 1–2 done: the API runs on a built-in demo store with zero setup, **and** on a real corpus — PubMed Central Open Access papers ingested into pgvector, answered by dense (HNSW cosine) retrieval with citations to real passages and figures.
 
 ## Quickstart
 
@@ -114,8 +114,6 @@ curl -s -X POST localhost:8000/ask -H 'content-type: application/json' \
 
 Embeddings default to `BAAI/bge-small-en-v1.5` (384-dim, CPU-friendly). For tests
 or a torch-free run, set `PAPERLENS_EMBEDDER=hashing` (deterministic, not semantic).
-
-Deploy options are in [DEPLOY.md](./DEPLOY.md).
 
 ## License
 MIT
