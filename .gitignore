@@ -28,3 +28,8 @@ frontend/.env*
 .DS_Store
 .idea/
 .vscode/
+
+# Planning docs kept local (not tracked)
+/MILESTONES.md
+/DEPLOY.md
+/docs/v2-design.md
