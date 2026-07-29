@@ -1,8 +1,8 @@
 """Runtime configuration, loaded from environment / .env.
 
 Week 1 runs entirely off the in-memory demo store, so nothing here is
-required. The database and model fields are placeholders the later
-milestones wire up (Week 2: pgvector; Week 3: Claude vision).
+required. The database and model fields are wired up by later milestones
+(Week 2: pgvector; Week 3: local Qwen2.5-VL vision generation).
 """
 
 from __future__ import annotations
@@ -27,8 +27,10 @@ class Settings(BaseSettings):
     embedding_model: str = "BAAI/bge-small-en-v1.5"
     embedding_dim: int = 384
 
-    anthropic_api_key: str | None = None
-    generation_model: str = "claude-sonnet-5"
+    # Answer generation. "extractive" (no model, default so the demo/tests stay
+    # light) or "qwen-vision" (local Qwen2.5-VL reasoning over figure images).
+    generator: str = "extractive"
+    vision_model: str = "Qwen/Qwen2.5-VL-3B-Instruct"
 
 
 @lru_cache
