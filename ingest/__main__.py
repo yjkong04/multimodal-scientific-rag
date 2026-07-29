@@ -1,10 +1,10 @@
 """Ingestion CLI: fetch open-access PMC papers and chunk them.
 
+    # Dry run: fetch, parse, chunk, print a summary
     python -m ingest --query "CRISPR gene editing" --limit 5
-    python -m ingest --pmcids PMC13403225 PMC13402739
 
-For now this prints a summary of what was parsed and chunked. Wiring the chunks
-into pgvector with embeddings is the next step in Week 2.
+    # Embed and write into pgvector (needs a running DB; see docker-compose.yml)
+    python -m ingest --pmcids PMC13403225 PMC13402739 --write
 """
 
 from __future__ import annotations
@@ -21,9 +21,23 @@ def main() -> None:
     parser.add_argument("--query", help="search the PMC open-access subset")
     parser.add_argument("--pmcids", nargs="+", help="explicit PMCIDs to fetch")
     parser.add_argument("--limit", type=int, default=5, help="max papers for --query")
+    parser.add_argument("--write", action="store_true", help="embed and write into pgvector")
     args = parser.parse_args()
 
     enable_os_trust_store()
+
+    conn = writer = embedder = None
+    if args.write:
+        import psycopg
+
+        from api.config import get_settings
+        from api.embeddings import build_embedder
+        from .index import write_paper
+
+        settings = get_settings()
+        embedder = build_embedder(settings.embedder, settings.embedding_model, settings.embedding_dim)
+        conn = psycopg.connect(settings.database_url, autocommit=True)
+        writer = write_paper
 
     if args.pmcids:
         pmcids = args.pmcids
@@ -37,14 +51,22 @@ def main() -> None:
     for pmcid in pmcids:
         paper = fetch_and_parse(pmcid)
         chunks = chunk_paper(paper)
-        tc = sum(1 for c in chunks if c.modality == "text")
-        fc = sum(1 for c in chunks if c.modality == "figure")
+        if args.write:
+            tc, fc = writer(conn, paper, chunks, embedder)
+        else:
+            tc = sum(1 for c in chunks if c.modality == "text")
+            fc = sum(1 for c in chunks if c.modality == "figure")
         total_text += tc
         total_fig += fc
         title = (paper.title or "(untitled)")[:70]
-        print(f"  {pmcid}: {tc} text + {fc} figure chunks | {title}")
+        wrote = " (written)" if args.write else ""
+        print(f"  {pmcid}: {tc} text + {fc} figure chunks{wrote} | {title}")
 
-    print(f"total: {total_text} text chunks, {total_fig} figure chunks across {len(pmcids)} papers")
+    dest = " into pgvector" if args.write else ""
+    print(f"total: {total_text} text chunks, {total_fig} figure chunks across {len(pmcids)} papers{dest}")
+
+    if conn is not None:
+        conn.close()
 
 
 if __name__ == "__main__":
