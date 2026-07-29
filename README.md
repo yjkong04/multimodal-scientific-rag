@@ -1,6 +1,6 @@
 # PaperLens: Multimodal RAG over Scientific Papers (Text + Figures)
 
-[![repo](https://img.shields.io/badge/github-yjkong04%2Fpaperlens-blue)](https://github.com/yjkong04/paperlens)
+[![repo](https://img.shields.io/badge/github-yjkong04%2Fmultimodal--scientific--rag-blue)](https://github.com/yjkong04/multimodal-scientific-rag)
 
 **A multimodal retrieval-augmented generation system that answers questions over scientific papers by reasoning across both text and figures — grounding every claim in a cited passage or figure. Combines vision-language reasoning (Claude), hybrid dense retrieval over two modalities, multi-hop context assembly, and citation-level hallucination evaluation.**
 
@@ -90,7 +90,7 @@ curl -s -X POST localhost:8000/ask -H 'content-type: application/json' \
 A prebuilt image is published to GHCR:
 
 ```bash
-docker run -p 8000:8000 ghcr.io/yjkong04/paperlens:latest
+docker run -p 8000:8000 ghcr.io/yjkong04/multimodal-scientific-rag:latest
 curl -s localhost:8000/health
 ```
 
