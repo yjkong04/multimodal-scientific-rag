@@ -83,7 +83,16 @@ curl -s -X POST localhost:8000/ask -H 'content-type: application/json' \
   -d '{"question": "What does the figure show about dose and response?"}' | python3 -m json.tool
 ```
 
-For the full pipeline with Postgres/pgvector, see [`docker-compose.yml`](./docker-compose.yml) and `.env.example`.
+### Run with Docker
+
+A prebuilt image is published to GHCR:
+
+```bash
+docker run -p 8000:8000 ghcr.io/yjkong04/paperlens:latest
+curl -s localhost:8000/health
+```
+
+For the full pipeline with Postgres/pgvector, see [`docker-compose.yml`](./docker-compose.yml) and `.env.example`. Deploy options are in [DEPLOY.md](./DEPLOY.md).
 
 ## License
 MIT
