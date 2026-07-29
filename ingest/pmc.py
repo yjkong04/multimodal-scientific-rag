@@ -26,6 +26,7 @@ class Figure:
     label: str | None  # e.g. "Figure 3"
     caption: str
     fig_id: str | None = None  # JATS xml id, useful to resolve the image file later
+    graphic_href: str | None = None  # <graphic> filename; resolves to a public image URL
 
 
 @dataclass
@@ -80,6 +81,20 @@ def _norm(s: str) -> str:
     return " ".join(s.split()).strip()
 
 
+def _graphic_href(fig_el: ET.Element) -> str | None:
+    """The image filename a <fig> points at, from its (possibly nested) <graphic>.
+
+    The href lives in an xlink-namespaced attribute; match on the local name so
+    we handle both namespaced and bare `href`.
+    """
+    for c in fig_el.iter():
+        if _local(c.tag) in ("graphic", "inline-graphic"):
+            for key, val in c.attrib.items():
+                if _local(key) == "href":
+                    return val
+    return None
+
+
 def fetch_jats(pmcid: str) -> bytes:
     """Fetch one article's JATS XML by PMCID (with or without the 'PMC' prefix)."""
     uid = pmcid.removeprefix("PMC")
@@ -113,6 +128,7 @@ def parse_article(xml_bytes: bytes, paper_id: str) -> ParsedPaper:
                         label=_norm(_text(label_el)) if label_el is not None else None,
                         caption=caption,
                         fig_id=el.get("id"),
+                        graphic_href=_graphic_href(el),
                     )
                 )
 

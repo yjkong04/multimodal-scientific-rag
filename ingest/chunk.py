@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .figures import figure_image_url
 from .pmc import ParsedPaper
 
 
@@ -22,6 +23,7 @@ class Chunk:
     content: str
     figure_label: str | None = None
     fig_id: str | None = None
+    image_uri: str | None = None  # local path/URI of the figure image, if downloaded
     ord: int = 0
 
 
@@ -73,6 +75,7 @@ def chunk_paper(paper: ParsedPaper, max_chars: int = 1200, overlap: int = 150) -
                 content=fig.caption,
                 figure_label=fig.label,
                 fig_id=fig.fig_id,
+                image_uri=figure_image_url(paper.paper_id, fig.graphic_href) if fig.graphic_href else None,
                 ord=ordinal,
             )
         )
