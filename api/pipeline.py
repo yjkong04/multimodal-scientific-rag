@@ -21,6 +21,7 @@ def _to_citation(scored: ScoredRecord) -> Citation:
         source_id=r.source_id,
         section=r.section,
         figure_label=r.figure_label,
+        image_uri=r.image_uri,
         snippet=r.text,
         score=round(scored.score, 4),
     )

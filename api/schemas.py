@@ -31,6 +31,7 @@ class Citation(BaseModel):
     source_id: str = Field(..., description="Chunk id (text) or figure id (figure)")
     section: str | None = Field(None, description="Section the passage/figure lives in")
     figure_label: str | None = Field(None, description="Human label, e.g. 'Figure 3'")
+    image_uri: str | None = Field(None, description="URL of the figure image, for figure citations")
     snippet: str = Field(..., description="The retrieved text, or the figure caption")
     score: float = Field(..., description="Retrieval relevance score for this source")
 

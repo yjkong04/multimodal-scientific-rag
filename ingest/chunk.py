@@ -22,6 +22,7 @@ class Chunk:
     content: str
     figure_label: str | None = None
     fig_id: str | None = None
+    image_uri: str | None = None  # CDN URL of the figure image (remote), if resolved
     ord: int = 0
 
 
@@ -64,15 +65,19 @@ def chunk_paper(paper: ParsedPaper, max_chars: int = 1200, overlap: int = 150) -
             ordinal += 1
 
     for i, fig in enumerate(paper.figures):
+        # A caption-less figure still needs embeddable text so it is retrievable
+        # (e.g. by "Figure 3"); fall back to the label.
+        content = fig.caption or fig.label or "figure"
         chunks.append(
             Chunk(
                 chunk_id=f"{paper.paper_id}:fig{i}",
                 paper_id=paper.paper_id,
                 modality="figure",
                 section=None,
-                content=fig.caption,
+                content=content,
                 figure_label=fig.label,
                 fig_id=fig.fig_id,
+                image_uri=fig.image_uri,
                 ord=ordinal,
             )
         )

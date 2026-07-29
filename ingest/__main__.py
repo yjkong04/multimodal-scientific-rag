@@ -47,9 +47,17 @@ def main() -> None:
     else:
         parser.error("provide --query or --pmcids")
 
-    total_text = total_fig = 0
+    total_text = total_fig = total_img = 0
     for pmcid in pmcids:
         paper = fetch_and_parse(pmcid)
+        n_img = 0
+        if args.write:  # resolve figure image URLs only when we persist them
+            from .figures import attach_figure_image_urls
+
+            try:
+                n_img = attach_figure_image_urls(paper)
+            except Exception as e:  # a missing/blocked article page shouldn't abort ingestion
+                print(f"  {pmcid}: figure images unresolved ({type(e).__name__})")
         chunks = chunk_paper(paper)
         if args.write:
             tc, fc = writer(conn, paper, chunks, embedder)
@@ -58,12 +66,18 @@ def main() -> None:
             fc = sum(1 for c in chunks if c.modality == "figure")
         total_text += tc
         total_fig += fc
+        total_img += n_img
         title = (paper.title or "(untitled)")[:70]
         wrote = " (written)" if args.write else ""
-        print(f"  {pmcid}: {tc} text + {fc} figure chunks{wrote} | {title}")
+        img = f", {n_img} images" if args.write else ""
+        print(f"  {pmcid}: {tc} text + {fc} figure chunks{img}{wrote} | {title}")
 
     dest = " into pgvector" if args.write else ""
-    print(f"total: {total_text} text chunks, {total_fig} figure chunks across {len(pmcids)} papers{dest}")
+    imgs = f", {total_img} figure images" if args.write else ""
+    print(
+        f"total: {total_text} text chunks, {total_fig} figure chunks{imgs} "
+        f"across {len(pmcids)} papers{dest}"
+    )
 
     if conn is not None:
         conn.close()
