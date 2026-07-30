@@ -1,14 +1,15 @@
 """Turn a question into a grounded, cited answer.
 
-Week 1: hybrid retrieval over the demo store, then a deterministic extractive
-"answer" assembled from the retrieved sources. This is a placeholder for the
-VLM generation step (Week 3-4) but it already enforces the core contract:
-no citations -> refuse. That refusal path is the whole point of the system,
-so it is real from day one, not stubbed.
+Hybrid retrieval over a candidate pool -> context assembly (dedupe, section
+diversity for multi-hop coverage, budget) -> generation. Refusal is enforced in
+three places, so the system never answers on nothing: empty retrieval, best
+score below the relevance gate, or a generator that can't ground an answer.
 """
 
 from __future__ import annotations
 
+from .config import get_settings
+from .context import assemble_context, sections_covered
 from .generation import Generator
 from .schemas import AskRequest, AskResponse, Citation
 from .store import ScoredRecord, Store
@@ -33,18 +34,45 @@ def _to_citation(scored: ScoredRecord) -> Citation:
     )
 
 
+def _refused(store: Store) -> AskResponse:
+    return AskResponse(answer=_REFUSAL, citations=[], status="refused", backend=store.name)
+
+
 def answer_question(req: AskRequest, store: Store, generator: Generator) -> AskResponse:
-    text_hits = store.search_text(req.question, req.top_k_text)
-    figure_hits = store.search_figures(req.question, req.top_k_figures)
+    settings = get_settings()
+    mult = settings.retrieval_candidate_multiplier
 
-    citations = [_to_citation(s) for s in (*text_hits, *figure_hits)]
-    citations.sort(key=lambda c: c.score, reverse=True)
+    # Retrieve a larger pool than we'll keep, so the assembler has something to
+    # diversify across sections (multi-hop coverage).
+    text_hits = store.search_text(req.question, req.top_k_text * mult)
+    figure_hits = store.search_figures(req.question, req.top_k_figures * mult)
+    candidates = [_to_citation(s) for s in (*text_hits, *figure_hits)]
+    candidates.sort(key=lambda c: c.score, reverse=True)
 
-    # Nothing retrieved, or the generator couldn't ground an answer -> refuse.
-    answer = generator.generate(req.question, citations) if citations else ""
+    if not candidates:
+        return _refused(store)
+
+    # Relevance gate: don't answer on weak matches.
+    best = candidates[0].score
+    if best < settings.min_relevance_score:
+        return _refused(store)
+
+    context = assemble_context(
+        candidates,
+        char_budget=settings.context_char_budget,
+        per_section_cap=settings.per_section_cap,
+        max_figures=req.top_k_figures,
+    )
+
+    answer = generator.generate(req.question, context)
     if not answer.strip():
-        return AskResponse(answer=_REFUSAL, citations=[], status="refused", backend=store.name)
+        return _refused(store)
 
     return AskResponse(
-        answer=answer, citations=citations, status="answered", backend=store.name
+        answer=answer,
+        citations=context,
+        status="answered",
+        backend=store.name,
+        confidence=round(best, 4),
+        sections_covered=sections_covered(context),
     )

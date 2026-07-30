@@ -49,3 +49,7 @@ class AskResponse(BaseModel):
     status: Literal["answered", "refused"]
     # Which store backed this response, so callers know if it's the demo or real corpus.
     backend: str
+    # Retrieval-strength proxy (top citation score); None when refused.
+    confidence: float | None = None
+    # Distinct sections the answer draws on — a multi-hop coverage signal.
+    sections_covered: int = 0
