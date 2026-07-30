@@ -32,6 +32,15 @@ class Settings(BaseSettings):
     generator: str = "extractive"
     vision_model: str = "Qwen/Qwen2.5-VL-3B-Instruct"
 
+    # Context assembly (Week 4). Retrieve candidate_multiplier x top_k candidates,
+    # then diversify/budget down so one question's context can span sections.
+    retrieval_candidate_multiplier: int = 3
+    context_char_budget: int = 4000
+    per_section_cap: int = 2
+    # Refuse when the best retrieval score is below this (0.0 = disabled; scale
+    # depends on the embedder, so tune per embedding model).
+    min_relevance_score: float = 0.0
+
 
 @lru_cache
 def get_settings() -> Settings:
