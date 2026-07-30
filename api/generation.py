@@ -28,8 +28,9 @@ _USER_AGENT = "multimodal-scientific-rag/0.1"
 
 _SYSTEM = (
     "You are a scientific literature assistant. Answer the question using ONLY the "
-    "provided sources: text passages and figure images with their captions. Cite "
-    "figures by their label (e.g. 'Figure 3'). Do not use outside knowledge. If the "
+    "provided sources: text passages and figure images with their captions. After "
+    "each claim, cite its source inline in brackets — a figure by label ([Figure 3]) "
+    "or a passage by its section ([Methods]). Do not use outside knowledge. If the "
     "sources do not support an answer, reply with exactly: NO_ANSWER."
 )
 
