@@ -67,7 +67,7 @@ Multi-paper synthesis across the whole corpus, PDF layout parsing beyond what th
 - **Frontend:** Next.js document viewer (later milestone)
 
 ## Status
-Weeks 1–2 done: the API runs on a built-in demo store with zero setup, **and** on a real corpus — PubMed Central Open Access papers ingested into pgvector, answered by dense (HNSW cosine) retrieval with citations to real passages and figures.
+Weeks 1–5 done: the API runs on a built-in demo store with zero setup, **and** on a real corpus — PubMed Central Open Access papers ingested into pgvector, answered by dense (HNSW cosine) retrieval, multi-hop context assembly, and a local vision-language model, with citations to real passages and figures. An evaluation harness scores retrieval, groundedness, and refusal, and drives a comparison across candidate local VLMs.
 
 ## Quickstart
 
@@ -114,6 +114,48 @@ curl -s -X POST localhost:8000/ask -H 'content-type: application/json' \
 
 Embeddings default to `BAAI/bge-small-en-v1.5` (384-dim, CPU-friendly). For tests
 or a torch-free run, set `PAPERLENS_EMBEDDER=hashing` (deterministic, not semantic).
+
+## Evaluation
+
+A held-out question set is scored on three axes, so the system is measured rather
+than eyeballed:
+
+- **Retrieval** — recall@k and MRR against gold source ids (which chunk/figure
+  *should* ground the answer).
+- **Groundedness** — inline-citation support rate (does the model cite what it was
+  given?) plus citation-set precision/recall against the gold sources.
+- **Refusal** — refusal precision/recall and answer accuracy on an unanswerable
+  slice, so declining-when-unsupported is a measured behavior, not a hope.
+
+```bash
+# Runs on the demo corpus with no DB and no model (deterministic):
+PAPERLENS_EMBEDDER=hashing python -m evaluation
+
+# Real corpus + a corpus-specific eval set:
+python -m evaluation --backend pgvector --dataset evaluation/datasets/pmc_eval.jsonl
+```
+
+### VLM comparison
+
+The same harness scores each candidate generator on identical retrieval, so the
+figure-reasoning models are compared apples-to-apples (`python -m evaluation
+--sweep`). Retrieval is generator-independent; what differs is grounding and
+refusal. The vision rows are filled by an offline GPU run — the baseline runs
+anywhere:
+
+| generator | citation P | citation R | groundedness | refusal recall | answer acc |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| extractive (baseline) | ✓ runs | ✓ runs | n/a¹ | ✓ runs | ✓ runs |
+| Qwen2.5-VL-3B-Instruct | — | — | — | — | — |
+| Qwen2.5-VL-7B-Instruct | — | — | — | — | — |
+| InternVL2.5-8B | — | — | — | — | — |
+| Molmo-7B-D | — | — | — | — | — |
+| SmolVLM-Instruct (baseline VLM) | — | — | — | — | — |
+
+¹ The extractive baseline emits no inline citation markers, so groundedness is
+undefined for it; it is judged by citation precision/recall instead. Adding a
+candidate VLM is a one-line `GeneratorSpec` once its `Generator` subclass is
+registered in `api/generation.py`.
 
 ## License
 MIT

@@ -1,0 +1,9 @@
+# Held-out eval set over the DEMO-0001 demo corpus (api/store.py::_demo_records).
+# One JSON object per line. Mirrors evaluation.dataset.demo_cases() so the JSONL
+# loader path is exercised too. Real corpus sets live alongside this file.
+{"question": "How was response measured across the dose series?", "gold_source_ids": ["DEMO-0001:c1"], "answerable": true, "notes": "Methods passage: assay + triplicate design."}
+{"question": "What happens to the response as the dose increases?", "gold_source_ids": ["DEMO-0001:c2", "DEMO-0001:fig3"], "answerable": true, "notes": "Rises then plateaus; Results text + Figure 3."}
+{"question": "Is the plateau at higher doses due to toxicity or target saturation?", "gold_source_ids": ["DEMO-0001:c3"], "answerable": true, "notes": "Discussion attributes plateau to saturation."}
+{"question": "What does Figure 3 show about dose and response?", "gold_source_ids": ["DEMO-0001:fig3"], "answerable": true, "notes": "Direct figure question."}
+{"question": "Which antibiotic prevents neonatal infection?", "gold_source_ids": [], "answerable": false, "notes": "Off-corpus; should refuse."}
+{"question": "Do older adults report improved sleep quality?", "gold_source_ids": [], "answerable": false, "notes": "Off-corpus; should refuse."}
