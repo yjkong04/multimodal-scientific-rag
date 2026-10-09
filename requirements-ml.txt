@@ -9,5 +9,5 @@ sentence-transformers==3.3.1
 # is required for the Qwen2.5-VL classes. Also heavy; same install boundary.
 transformers>=4.49.0
 qwen-vl-utils==0.0.14
-accelerate>=1.0.0
+accelerate>=1.15.0
 pillow>=12.3.0
